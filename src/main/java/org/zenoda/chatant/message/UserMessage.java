@@ -34,8 +34,7 @@ public class UserMessage extends ChatMessage {
         }
 
         @Override
-
-        public ChatMessage build() {
+        public UserMessage build() {
             UserMessage userMessage = new UserMessage();
             _build(userMessage);
             userMessage.setMediaList(mediaList);

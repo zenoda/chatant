@@ -17,4 +17,25 @@ public class ToolMessage extends ChatMessage {
     public void setToolCallId(String toolCallId) {
         this.toolCallId = toolCallId;
     }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder extends ChatMessage.Builder {
+        private String toolCallId;
+
+        public Builder toolCallId(String toolCallId) {
+            this.toolCallId = toolCallId;
+            return this;
+        }
+
+        @Override
+        public ToolMessage build() {
+            ToolMessage toolMessage = new ToolMessage();
+            _build(toolMessage);
+            toolMessage.setToolCallId(toolCallId);
+            return toolMessage;
+        }
+    }
 }
