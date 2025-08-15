@@ -11,6 +11,7 @@ import java.util.List;
 public class Test1 {
     @Test
     public void test1() {
+        String apiKey = System.getenv("CHATANT_API_KEY");
         String conversationId = "000";
         SimpleChatMemory simpleChatMemory = SimpleChatMemory.builder().build();
         simpleChatMemory.addMessage(conversationId, UserMessage.builder()
@@ -20,7 +21,7 @@ public class Test1 {
                 .build()
                 .apply(OpenaiChatRequest.builder()
                         .baseUrl("https://dashscope.aliyuncs.com/compatible-mode/v1")
-                        .apiKey("sk-f31e1a473a0346c78b755b602634e6b1")
+                        .apiKey(apiKey)
                         .modelName("qwen3-32b")
                         .temperature(0)
                         .conversationId(conversationId)
@@ -46,7 +47,7 @@ public class Test1 {
                 .build()
                 .apply(OpenaiChatRequest.builder()
                         .baseUrl("https://dashscope.aliyuncs.com/compatible-mode/v1")
-                        .apiKey("sk-f31e1a473a0346c78b755b602634e6b1")
+                        .apiKey(apiKey)
                         .modelName("qwen3-32b")
                         .temperature(0)
                         .conversationId(conversationId)
