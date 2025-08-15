@@ -72,11 +72,10 @@ public abstract class ChatResponse {
             return this;
         }
 
-        protected ChatResponse _build(ChatResponse response) {
+        protected void _build(ChatResponse response) {
             response.stream = stream;
             response.error = error;
             response.conversationId = conversationId;
-            return response;
         }
 
         public abstract ChatResponse build();

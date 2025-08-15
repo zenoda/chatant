@@ -1,6 +1,6 @@
 package org.zenoda.chatant;
 
-public class ChatMessage {
+public abstract class ChatMessage {
     private ChatRole role;
     private String content;
 
