@@ -11,7 +11,6 @@ public abstract class ChatResponse {
     private Throwable error;
     private Consumer<PartialMessage> messageConsumer;
     private Consumer<AssistantMessage> completeConsumer;
-    private Consumer<Error> errorConsumer;
 
     protected String getConversationId() {
         return conversationId;
@@ -31,15 +30,6 @@ public abstract class ChatResponse {
 
     protected Consumer<AssistantMessage> getCompleteConsumer() {
         return completeConsumer;
-    }
-
-    protected Consumer<Error> getErrorConsumer() {
-        return errorConsumer;
-    }
-
-    public ChatResponse onError(Consumer<Error> errorConsumer) {
-        this.errorConsumer = errorConsumer;
-        return this;
     }
 
     public ChatResponse onMessage(Consumer<PartialMessage> messageConsumer) {

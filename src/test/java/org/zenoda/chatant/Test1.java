@@ -34,9 +34,6 @@ public class Test1 {
                 .onMessage(msg -> {
                     System.out.println(msg);
                 })
-                .onError(error -> {
-                    error.printStackTrace();
-                })
                 .subscribe();
 
 
@@ -70,9 +67,6 @@ public class Test1 {
                 })
                 .onMessage(msg -> {
                     System.out.println(msg);
-                })
-                .onError(error -> {
-                    error.printStackTrace();
                 })
                 .subscribe();
     }

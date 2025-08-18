@@ -6,10 +6,7 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.zenoda.chatant.ChatResponse;
 import org.zenoda.chatant.ToolCallSpecification;
-import org.zenoda.chatant.message.AssistantMessage;
-import org.zenoda.chatant.message.ResultPartialMessage;
-import org.zenoda.chatant.message.ThinkingPartialMessage;
-import org.zenoda.chatant.message.ToolCallPartialMessage;
+import org.zenoda.chatant.message.*;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -36,7 +33,9 @@ public class OpenaiChatResponse extends ChatResponse {
     @Override
     public void subscribe() {
         if (getError() != null) {
-            getErrorConsumer().accept(new Error(getError().getMessage(), getError()));
+            getMessageConsumer().accept(ErrorPartialMessage.builder()
+                    .error(getError().getMessage())
+                    .build());
         } else {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(getStream(), StandardCharsets.UTF_8))) {
                 AssistantMessage assistantMessage = AssistantMessage.builder().build();
@@ -100,14 +99,20 @@ public class OpenaiChatResponse extends ChatResponse {
                                 }
                             }
                         } else {
-                            getErrorConsumer().accept(new Error("Data format is abnormal: " + line));
+                            getMessageConsumer().accept(ErrorPartialMessage.builder()
+                                    .error("Data format is abnormal: " + line)
+                                    .build());
                         }
                     } catch (Exception e) {
-                        getErrorConsumer().accept(new Error(e.getMessage(), e));
+                        getMessageConsumer().accept(ErrorPartialMessage.builder()
+                                .error(e.getMessage())
+                                .build());
                     }
                 });
             } catch (Exception e) {
-                getErrorConsumer().accept(new Error(e.getMessage(), e));
+                getMessageConsumer().accept(ErrorPartialMessage.builder()
+                        .error(e.getMessage())
+                        .build());
             }
         }
     }
