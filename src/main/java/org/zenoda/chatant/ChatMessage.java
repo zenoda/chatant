@@ -1,5 +1,19 @@
 package org.zenoda.chatant;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.zenoda.chatant.message.AssistantMessage;
+import org.zenoda.chatant.message.SystemMessage;
+import org.zenoda.chatant.message.ToolMessage;
+import org.zenoda.chatant.message.UserMessage;
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "role")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = SystemMessage.class, name = "SYSTEM"),
+        @JsonSubTypes.Type(value = UserMessage.class, name = "USER"),
+        @JsonSubTypes.Type(value = ToolMessage.class, name = "TOOL"),
+        @JsonSubTypes.Type(value = AssistantMessage.class, name = "ASSISTANT")
+})
 public abstract class ChatMessage {
     private ChatRole role;
     private String content;
