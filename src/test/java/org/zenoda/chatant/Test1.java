@@ -20,7 +20,7 @@ public class Test1 {
                         .temperature(0)
                         .conversationId(conversationId)
                         .messages(List.of(UserMessage.builder()
-                                .content("我喜欢北京的天气，你呢？")
+                                .content("雷雨天要注意什么？")
                                 .build()))
                         .build())
                 .onComplete(full -> {

@@ -55,8 +55,8 @@ public class OpenaiChatResponse extends ChatResponse {
                                 if (choices != null && !choices.isEmpty()) {
                                     ObjectNode choice0 = (ObjectNode) choices.get(0);
                                     ObjectNode delta = (ObjectNode) choice0.get("delta");
-                                    String thinkingText = Optional.ofNullable(delta.get("reasoning_content")).orElse(NullNode.getInstance()).asText("").trim();
-                                    String resultText = Optional.ofNullable(delta.get("content")).orElse(NullNode.getInstance()).asText("").trim();
+                                    String thinkingText = Optional.ofNullable(delta.get("reasoning_content")).orElse(NullNode.getInstance()).asText("");
+                                    String resultText = Optional.ofNullable(delta.get("content")).orElse(NullNode.getInstance()).asText("");
                                     ArrayNode toolCalls = (ArrayNode) delta.get("tool_calls");
                                     if (!thinkingText.isEmpty()) {
                                         assistantMessage.setReasoningContent(Optional.ofNullable(assistantMessage.getReasoningContent()).orElse("") + thinkingText);
