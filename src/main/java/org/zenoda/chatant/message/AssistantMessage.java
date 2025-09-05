@@ -58,6 +58,12 @@ public class AssistantMessage extends ChatMessage {
             return this;
         }
 
+        @Override
+        public Builder content(String content) {
+            super.content(content);
+            return this;
+        }
+
         public Builder reasoningContent(String reasoningContent) {
             this.reasoningContent = reasoningContent;
             return this;

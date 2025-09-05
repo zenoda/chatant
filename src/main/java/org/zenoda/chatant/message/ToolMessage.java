@@ -31,6 +31,12 @@ public class ToolMessage extends ChatMessage {
         }
 
         @Override
+        public Builder content(String content) {
+            super.content(content);
+            return this;
+        }
+
+        @Override
         public ToolMessage build() {
             ToolMessage toolMessage = new ToolMessage();
             _build(toolMessage);

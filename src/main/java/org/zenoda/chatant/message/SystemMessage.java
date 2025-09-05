@@ -14,6 +14,12 @@ public class SystemMessage extends ChatMessage {
 
     public static class Builder extends ChatMessage.Builder {
         @Override
+        public Builder content(String content) {
+            super.content(content);
+            return this;
+        }
+
+        @Override
         public SystemMessage build() {
             return new SystemMessage();
         }
