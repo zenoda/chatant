@@ -8,6 +8,7 @@ public abstract class ChatRequest {
     private String apiKey;
     private String modelName;
     private Float temperature;
+    private Boolean streaming;
     private Integer topK;
     private Float topP;
     private Integer seed;
@@ -17,12 +18,24 @@ public abstract class ChatRequest {
     private List<? extends ChatMessage> messages;
     private List<ToolSpecification> tools;
 
+    public ChatRequest() {
+        this.streaming = true;
+    }
+
     public String getBaseUrl() {
         return baseUrl;
     }
 
     public void setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
+    }
+
+    public Boolean getStreaming() {
+        return streaming;
+    }
+
+    public void setStreaming(Boolean streaming) {
+        this.streaming = streaming;
     }
 
     public String getApiKey() {
@@ -120,17 +133,26 @@ public abstract class ChatRequest {
         protected String apiKey;
         protected String modelName;
         protected Float temperature;
+        protected Boolean streaming;
         protected Integer topK;
         protected Float topP;
         protected Integer seed;
         protected Long maxTokens;
         protected Integer timeout;
-        protected String conversationId;
         protected List<? extends ChatMessage> messages;
         protected List<ToolSpecification> tools;
 
+        public Builder() {
+            this.streaming = true;
+        }
+
         public Builder baseUrl(String baseUrl) {
             this.baseUrl = baseUrl;
+            return this;
+        }
+
+        public Builder streaming(Boolean streaming) {
+            this.streaming = streaming;
             return this;
         }
 
@@ -174,11 +196,6 @@ public abstract class ChatRequest {
             return this;
         }
 
-        public Builder conversationId(String conversationId) {
-            this.conversationId = conversationId;
-            return this;
-        }
-
         public Builder messages(List<? extends ChatMessage> messages) {
             this.messages = messages;
             return this;
@@ -194,12 +211,12 @@ public abstract class ChatRequest {
             chatRequest.apiKey = apiKey;
             chatRequest.modelName = modelName;
             chatRequest.temperature = temperature;
+            chatRequest.streaming = streaming;
             chatRequest.topK = topK;
             chatRequest.topP = topP;
             chatRequest.seed = seed;
             chatRequest.maxTokens = maxTokens;
             chatRequest.timeout = timeout;
-            chatRequest.conversationId = conversationId;
             chatRequest.messages = messages;
             chatRequest.tools = tools;
         }

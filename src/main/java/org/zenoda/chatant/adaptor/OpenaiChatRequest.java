@@ -3,10 +3,7 @@ package org.zenoda.chatant.adaptor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.zenoda.chatant.ChatRequest;
-import org.zenoda.chatant.ChatResponse;
-import org.zenoda.chatant.ChatRole;
-import org.zenoda.chatant.MediaType;
+import org.zenoda.chatant.*;
 import org.zenoda.chatant.message.AssistantMessage;
 import org.zenoda.chatant.message.SystemMessage;
 import org.zenoda.chatant.message.ToolMessage;
@@ -59,7 +56,7 @@ public class OpenaiChatRequest extends ChatRequest {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode requestJsonNode = mapper.createObjectNode()
                 .put("model", getModelName())
-                .put("stream", true);
+                .put("stream", getStreaming());
         if (getTemperature() != null) {
             requestJsonNode.put("temperature", getTemperature());
         }

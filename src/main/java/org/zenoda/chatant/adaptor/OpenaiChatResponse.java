@@ -1,5 +1,6 @@
 package org.zenoda.chatant.adaptor;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.NullNode;
@@ -9,9 +10,11 @@ import org.zenoda.chatant.ToolCallSpecification;
 import org.zenoda.chatant.message.*;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class OpenaiChatResponse extends ChatResponse {
@@ -37,83 +40,111 @@ public class OpenaiChatResponse extends ChatResponse {
                     .error(getError().getMessage())
                     .build());
         } else {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(getStream(), StandardCharsets.UTF_8))) {
-                AssistantMessage assistantMessage = AssistantMessage.builder().build();
-                reader.lines().forEach(line -> {
-                    line = line.trim();
-                    if (line.isEmpty()) {
-                        return;
-                    }
-                    try {
-                        if (line.startsWith("data:")) {
-                            line = line.substring("data:".length()).trim();
-                            if (line.equals("[DONE]")) {
-                                getCompleteConsumer().accept(assistantMessage);
-                            } else {
-                                ObjectNode data = objectMapper.readValue(line, ObjectNode.class);
-                                ArrayNode choices = (ArrayNode) data.get("choices");
-                                if (choices != null && !choices.isEmpty()) {
-                                    ObjectNode choice0 = (ObjectNode) choices.get(0);
-                                    ObjectNode delta = (ObjectNode) choice0.get("delta");
-                                    String thinkingText = Optional.ofNullable(delta.get("reasoning_content")).orElse(NullNode.getInstance()).asText("");
-                                    String resultText = Optional.ofNullable(delta.get("content")).orElse(NullNode.getInstance()).asText("");
-                                    ArrayNode toolCalls = (ArrayNode) delta.get("tool_calls");
-                                    if (!thinkingText.isEmpty()) {
-                                        assistantMessage.setReasoningContent(Optional.ofNullable(assistantMessage.getReasoningContent()).orElse("") + thinkingText);
-                                        getMessageConsumer().accept(ThinkingPartialMessage.builder().text(thinkingText).build());
-                                    } else if (!resultText.isEmpty()) {
-                                        assistantMessage.setContent(Optional.ofNullable(assistantMessage.getContent()).orElse("") + resultText);
-                                        getMessageConsumer().accept(ResultPartialMessage.builder().text(resultText).build());
-                                    } else if (toolCalls != null && !toolCalls.isEmpty()) {
-                                        toolCalls.valueStream().map(toolCall -> {
-                                            int index = toolCall.get("index").asInt();
-                                            if (assistantMessage.getToolCalls() == null) {
-                                                assistantMessage.setToolCalls(new ArrayList<>());
-                                            }
-                                            ToolCallSpecification toolCallSpecification = assistantMessage.getToolCalls()
-                                                    .stream()
-                                                    .filter(tcs -> tcs.getIndex() == index)
-                                                    .findFirst()
-                                                    .orElse(null);
-                                            String partialArguments = Optional.ofNullable(toolCall.get("function").get("arguments")).orElse(NullNode.getInstance()).asText(null);
-                                            if (toolCallSpecification == null) {
-                                                toolCallSpecification = ToolCallSpecification.builder()
-                                                        .index(index)
-                                                        .id(toolCall.get("id").asText())
-                                                        .function(toolCall.get("function").get("name").asText())
-                                                        .arguments(partialArguments)
-                                                        .build();
-                                                assistantMessage.getToolCalls().add(toolCallSpecification);
-                                            } else if (partialArguments != null) {
-                                                toolCallSpecification.setArguments(toolCallSpecification.getArguments() + partialArguments);
-                                            }
-                                            return ToolCallPartialMessage
-                                                    .builder()
-                                                    .index(toolCall.get("index").asInt())
-                                                    .id(toolCallSpecification.getId())
-                                                    .name(toolCallSpecification.getFunction())
-                                                    .partialArguments(partialArguments)
-                                                    .build();
-                                        }).forEach(getMessageConsumer());
-                                    }
-                                }
-                            }
-                        } else {
-                            getMessageConsumer().accept(ErrorPartialMessage.builder()
-                                    .error("Data format is abnormal: " + line)
-                                    .build());
-                        }
-                    } catch (Exception e) {
-                        getMessageConsumer().accept(ErrorPartialMessage.builder()
-                                .error(e.getMessage())
-                                .build());
-                    }
-                });
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(getInputStream(), StandardCharsets.UTF_8))) {
+                AssistantMessage assistantMessage = null;
+                if (getStreaming()) {
+                    assistantMessage = readStreaming(reader);
+                } else {
+                    assistantMessage = readBlock(reader);
+                }
+                getCompleteConsumer().accept(assistantMessage);
             } catch (Exception e) {
                 getMessageConsumer().accept(ErrorPartialMessage.builder()
                         .error(e.getMessage())
                         .build());
             }
         }
+    }
+
+    private AssistantMessage readBlock(final BufferedReader reader) throws IOException {
+        JsonNode rootNode = objectMapper.readTree(reader);
+        ObjectNode messageNode = (ObjectNode) rootNode.get("choices").get(0).get("message");
+        List<ToolCallSpecification> toolCalls = Optional.ofNullable(messageNode.get("tool_calls")).orElse(objectMapper.createArrayNode())
+                .valueStream()
+                .map(toolCallNode -> ToolCallSpecification.builder()
+                        .id(toolCallNode.get("id").asText())
+                        .index(toolCallNode.get("index").asInt())
+                        .function(toolCallNode.get("function").get("name").asText())
+                        .arguments(toolCallNode.get("function").get("arguments").asText())
+                        .build())
+                .toList();
+        return AssistantMessage.builder()
+                .content(messageNode.get("content").asText())
+                .toolCalls(toolCalls)
+                .build();
+    }
+
+    private AssistantMessage readStreaming(final BufferedReader reader) throws IOException {
+        AssistantMessage assistantMessage = AssistantMessage.builder().build();
+        reader.lines().forEach(line -> {
+            line = line.trim();
+            if (line.isEmpty()) {
+                return;
+            }
+            try {
+                if (line.startsWith("data:")) {
+                    line = line.substring("data:".length()).trim();
+                    if (line.equals("[DONE]")) {
+                        return;
+                    }
+                    ObjectNode data = objectMapper.readValue(line, ObjectNode.class);
+                    ArrayNode choices = (ArrayNode) data.get("choices");
+                    if (choices != null && !choices.isEmpty()) {
+                        ObjectNode choice0 = (ObjectNode) choices.get(0);
+                        ObjectNode delta = (ObjectNode) choice0.get("delta");
+                        String thinkingText = Optional.ofNullable(delta.get("reasoning_content")).orElse(NullNode.getInstance()).asText("");
+                        String resultText = Optional.ofNullable(delta.get("content")).orElse(NullNode.getInstance()).asText("");
+                        ArrayNode toolCalls = (ArrayNode) delta.get("tool_calls");
+                        if (!thinkingText.isEmpty()) {
+                            assistantMessage.setReasoningContent(Optional.ofNullable(assistantMessage.getReasoningContent()).orElse("") + thinkingText);
+                            getMessageConsumer().accept(ThinkingPartialMessage.builder().text(thinkingText).build());
+                        } else if (!resultText.isEmpty()) {
+                            assistantMessage.setContent(Optional.ofNullable(assistantMessage.getContent()).orElse("") + resultText);
+                            getMessageConsumer().accept(ResultPartialMessage.builder().text(resultText).build());
+                        } else if (toolCalls != null && !toolCalls.isEmpty()) {
+                            toolCalls.valueStream().map(toolCall -> {
+                                int index = toolCall.get("index").asInt();
+                                if (assistantMessage.getToolCalls() == null) {
+                                    assistantMessage.setToolCalls(new ArrayList<>());
+                                }
+                                ToolCallSpecification toolCallSpecification = assistantMessage.getToolCalls()
+                                        .stream()
+                                        .filter(tcs -> tcs.getIndex() == index)
+                                        .findFirst()
+                                        .orElse(null);
+                                String partialArguments = Optional.ofNullable(toolCall.get("function").get("arguments")).orElse(NullNode.getInstance()).asText(null);
+                                if (toolCallSpecification == null) {
+                                    toolCallSpecification = ToolCallSpecification.builder()
+                                            .index(index)
+                                            .id(toolCall.get("id").asText())
+                                            .function(toolCall.get("function").get("name").asText())
+                                            .arguments(partialArguments)
+                                            .build();
+                                    assistantMessage.getToolCalls().add(toolCallSpecification);
+                                } else if (partialArguments != null) {
+                                    toolCallSpecification.setArguments(toolCallSpecification.getArguments() + partialArguments);
+                                }
+                                return ToolCallPartialMessage
+                                        .builder()
+                                        .index(toolCall.get("index").asInt())
+                                        .id(toolCallSpecification.getId())
+                                        .name(toolCallSpecification.getFunction())
+                                        .partialArguments(partialArguments)
+                                        .build();
+                            }).forEach(getMessageConsumer());
+                        }
+                    }
+                } else {
+                    getMessageConsumer().accept(ErrorPartialMessage.builder()
+                            .error("Data format is abnormal: " + line)
+                            .build());
+                }
+            } catch (Exception e) {
+                getMessageConsumer().accept(ErrorPartialMessage.builder()
+                        .error(e.getMessage())
+                        .build());
+            }
+        });
+        return assistantMessage;
     }
 }

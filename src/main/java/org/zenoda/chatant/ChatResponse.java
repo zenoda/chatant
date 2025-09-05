@@ -6,22 +6,22 @@ import java.io.InputStream;
 import java.util.function.Consumer;
 
 public abstract class ChatResponse {
-    private String conversationId;
-    private InputStream stream;
+    private InputStream inputStream;
+    private Boolean streaming;
     private Throwable error;
     private Consumer<PartialMessage> messageConsumer;
     private Consumer<AssistantMessage> completeConsumer;
 
-    protected String getConversationId() {
-        return conversationId;
+    protected Boolean getStreaming() {
+        return streaming;
     }
 
     protected Throwable getError() {
         return error;
     }
 
-    protected InputStream getStream() {
-        return stream;
+    protected InputStream getInputStream() {
+        return inputStream;
     }
 
     protected Consumer<PartialMessage> getMessageConsumer() {
@@ -43,17 +43,17 @@ public abstract class ChatResponse {
     }
 
     public abstract static class Builder {
-        private String conversationId;
-        private InputStream stream;
+        private InputStream inputStream;
+        private Boolean streaming;
         private Throwable error;
 
-        public Builder conversationId(String conversationId) {
-            this.conversationId = conversationId;
+        public Builder streaming(Boolean streaming) {
+            this.streaming = streaming;
             return this;
         }
 
-        public Builder stream(InputStream stream) {
-            this.stream = stream;
+        public Builder inputStream(InputStream inputStream) {
+            this.inputStream = inputStream;
             return this;
         }
 
@@ -63,9 +63,9 @@ public abstract class ChatResponse {
         }
 
         protected void _build(ChatResponse response) {
-            response.stream = stream;
+            response.inputStream = inputStream;
+            response.streaming = streaming;
             response.error = error;
-            response.conversationId = conversationId;
         }
 
         public abstract ChatResponse build();

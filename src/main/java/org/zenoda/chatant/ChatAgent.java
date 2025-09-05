@@ -31,15 +31,16 @@ public class ChatAgent {
 
     public ChatResponse apply(ChatRequest request) {
         HttpRequest httpRequest = request.buildHttpRequest();
-        InputStream stream = null;
+        InputStream inputStream = null;
         Throwable error = null;
         try {
-            stream = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream()).body();
+            inputStream = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream()).body();
         } catch (IOException | InterruptedException e) {
             error = e;
         }
         return request.responseBuilder()
-                .stream(stream)
+                .inputStream(inputStream)
+                .streaming(request.getStreaming())
                 .error(error)
                 .build();
     }

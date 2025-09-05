@@ -21,7 +21,9 @@ public class SystemMessage extends ChatMessage {
 
         @Override
         public SystemMessage build() {
-            return new SystemMessage();
+            SystemMessage systemMessage = new SystemMessage();
+            _build(systemMessage);
+            return systemMessage;
         }
     }
 }
