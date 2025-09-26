@@ -11,6 +11,7 @@ import org.zenoda.chatant.message.UserMessage;
 
 import java.net.URI;
 import java.net.http.HttpRequest;
+import java.util.Optional;
 
 public class OpenaiChatRequest extends ChatRequest {
     public static Builder builder() {
@@ -101,13 +102,13 @@ public class OpenaiChatRequest extends ChatRequest {
                     });
                     ObjectNode textContentJsonNode = mapper.createObjectNode();
                     textContentJsonNode.put("type", "text");
-                    textContentJsonNode.put("text", userMessage.getContent());
+                    textContentJsonNode.put("text", Optional.ofNullable(userMessage.getContent()).orElse(""));
                     contentArrayNode.add(textContentJsonNode);
                 }
             } else if (message.getRole() == ChatRole.ASSISTANT) {
                 AssistantMessage assistantMessage = (AssistantMessage) message;
-                messageJsonNode.put("content", assistantMessage.getContent());
-                messageJsonNode.put("reasoning_content", assistantMessage.getReasoningContent());
+                messageJsonNode.put("content", Optional.ofNullable(assistantMessage.getContent()).orElse(""));
+                messageJsonNode.put("reasoning_content", Optional.ofNullable(assistantMessage.getReasoningContent()).orElse(""));
                 if (assistantMessage.getToolCalls() != null && !assistantMessage.getToolCalls().isEmpty()) {
                     ArrayNode toolCallsNode = messageJsonNode.putArray("tool_calls");
                     assistantMessage.getToolCalls().forEach(toolCall -> {
@@ -126,7 +127,7 @@ public class OpenaiChatRequest extends ChatRequest {
                 messageJsonNode.put("content", systemMessage.getContent());
             } else if (message.getRole() == ChatRole.TOOL) {
                 ToolMessage toolMessage = (ToolMessage) message;
-                messageJsonNode.put("content", toolMessage.getContent())
+                messageJsonNode.put("content", Optional.ofNullable(toolMessage.getContent()).orElse(""))
                         .put("tool_call_id", toolMessage.getToolCallId());
             }
             messageArrayNode.add(messageJsonNode);

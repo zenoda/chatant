@@ -18,7 +18,6 @@ public class Test1 {
                         .apiKey(apiKey)
                         .modelName("qwen3-32b")
                         .temperature(0)
-                        .conversationId(conversationId)
                         .messages(List.of(UserMessage.builder()
                                 .content("雷雨天要注意什么？")
                                 .build()))

@@ -135,14 +135,17 @@ public class OpenaiChatResponse extends ChatResponse {
                         }
                     }
                 } else {
+                    String errorMsg = "Data format is abnormal: " + line;
                     getMessageConsumer().accept(ErrorPartialMessage.builder()
-                            .error("Data format is abnormal: " + line)
+                            .error(errorMsg)
                             .build());
+                    assistantMessage.setContent(errorMsg);
                 }
             } catch (Exception e) {
                 getMessageConsumer().accept(ErrorPartialMessage.builder()
                         .error(e.getMessage())
                         .build());
+                assistantMessage.setContent(e.getMessage());
             }
         });
         return assistantMessage;
